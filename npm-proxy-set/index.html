@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <title>npm behind corporate proxy configuration</title>
+
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+
+	<!-- Optional theme -->
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+
+	
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+	
+	<style>
+		.code-display {
+			color: white;
+			background: black;
+			width: 100%;
+			padding: 0.5em;
+			min-height: 5em;
+		}
+	</style>
+  </head>
+  <body>
+    <div class='container'>
+	
+		<div class='row'>
+			<div class='col-md-12'>
+				<h1 class='page-header'>proxy setting behing a corporate firewall</h1>
+				
+				<p>Enter your proxy information on the form below, click on <code>Get Settings</code> and get the ready to go
+				command line settings to set your <code>npm</code>, <code>Windows</code> and <code>Linux</code>/<code>Unix</code>
+				proxy settings: just copy the results and paste them to your command line.</p>
+			</div>
+		</div>
+		
+		<div class='row'>
+			<div class='col-md-12'>
+				<form class="form-horizontal" id='formSettings'>
+					<fieldset>
+
+					<!-- Form Name -->
+					<legend>Proxy Information</legend>
+
+					<!-- Text input-->
+					<div class="form-group">
+					  <label class="col-md-4 control-label" for="proxy">Proxy</label>  
+					  <div class="col-md-4">
+					  <input id="proxy" name="proxy" type="text" placeholder="eg.: http://10.10.10.10:3128" class="form-control input-md" required="">
+					  </div>
+					</div>
+
+					<!-- Text input-->
+					<div class="form-group">
+					  <label class="col-md-4 control-label" for="username">Username</label>  
+					  <div class="col-md-4">
+					  <input id="username" name="username" type="text" placeholder="eg.: DOMAIN\USERNAME" class="form-control input-md">
+					  </div>
+					</div>
+
+					<!-- Password input-->
+					<div class="form-group">
+					  <label class="col-md-4 control-label" for="password">Password</label>
+					  <div class="col-md-4">
+						<input id="password" name="password" type="password" placeholder="enter your password" class="form-control input-md">
+					  </div>
+					</div>
+					<div class="col-md-8">
+						<button type="button" class="btn btn-default pull-right" aria-label="Get Settings" id='btnGetSettings'>
+						  <!-- span class="glyphicon glyphicon-align-left" aria-hidden="true"></span --> Get Settings!
+					</button>
+					</div>
+
+					</fieldset>
+				</form>			
+			
+			</div>
+		</div>
+	</div>
+	
+	<div class='row'>
+		<div class='col-md-3'>
+		</div>
+		<div class='col-md-5'>
+			<p>Copy the settings below and paste them to your terminal</p>
+			
+			<label for ='npmSettings'>npm settings</label>
+			<pre id='npmSettings' class='code-display'></pre>
+		</div>
+	</div>
+	
+	<div class='row'>
+		<div class='col-md-3'></div>
+		<div class='col-md-5'>
+			<div class='alert alert-warning' role='alert'>
+			<p>No passwords are collected by this page! It works entirely on the client side.</p>
+			</div>
+		</div>
+	</div>
+	
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+	<!-- Latest compiled and minified JavaScript -->
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+
+		<script>
+		function init() {
+			if (localStorage) {
+				var proxy = localStorage.getItem('proxy');
+				var username = localStorage.getItem('username');
+				
+				document.getElementById('proxy').value = proxy || '';
+				document.getElementById('username').value = username || '';
+			}
+		}
+		
+		function save(proxy, username) {
+			if (localStorage) {
+				localStorage.setItem('proxy', proxy);
+				localStorage.setItem('username', username);
+			}
+		}
+		
+		function clear() {
+			if (localStorage) {
+				localStorage.removeItem('proxy');
+				localStorage.removeItem('username');
+				init();
+			}			
+		}
+		
+		function getSettings() {
+		
+			// get the values
+			var proxy = $('#proxy').val();
+			var username = $('#username').val();
+			var password = $('#password').val();
+			
+			if (proxy.indexOf('://') < 0) { 
+				alert('Please, include the protocol on the proxy settings (eg.: http://)');
+				return;
+			}
+			
+			var parts = proxy.split('://');
+			
+			var httpProxySettings = 'npm config set proxy "' + parts[0] + '://' + encodeURI(username) + ':' + encodeURI(password) + '@' + parts[1] + '"';
+			var httpsProxySettings = 'npm config set https-proxy "' + parts[0] + '://' + encodeURI(username) + ':' + encodeURI(password) + '@' + parts[1] + '"';
+			
+			$('#npmSettings').html(httpProxySettings + '\n' + httpsProxySettings + '\n');
+			
+			save(proxy, username);
+		}
+		
+		$(document).ready( function() {
+		
+			$('#btnGetSettings').click(getSettings);
+		
+		});
+	</script>
+  </body>
+</html>
